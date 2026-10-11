@@ -142,7 +142,7 @@ export const DEFAULT_MODEL = 'gemini-flash-latest';
 
 export function defaultSettings(): Settings {
   return {
-    geminiApiKey: '',
+    geminiApiKey: import.meta.env.VITE_GEMINI_API_KEY ?? '',
     model: DEFAULT_MODEL,
     tone: 'professional',
     answerLength: 'medium',

@@ -22,11 +22,14 @@ const ALL_KEYS: StorageKey[] = ['profile', 'resume', 'savedAnswers', 'settings']
 function withDefaults(raw: Record<string, unknown>): StoredData {
   const profile = { ...defaultProfile(), ...(raw['profile'] as Partial<Profile> | undefined) };
   profile.eeo = { ...defaultProfile().eeo, ...profile.eeo };
+  const settings = { ...defaultSettings(), ...(raw['settings'] as Partial<Settings> | undefined) };
+  // A key saved as empty falls back to the built-in one from .env.local, if any.
+  settings.geminiApiKey ||= defaultSettings().geminiApiKey;
   return {
     profile,
     resume: (raw['resume'] as Resume | undefined) ?? null,
     savedAnswers: (raw['savedAnswers'] as SavedAnswer[] | undefined) ?? [],
-    settings: { ...defaultSettings(), ...(raw['settings'] as Partial<Settings> | undefined) },
+    settings,
   };
 }
 
