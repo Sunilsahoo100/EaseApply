@@ -2,6 +2,16 @@
 
 A Chrome extension (Manifest V3, Angular 21 + Vite) that fills job application forms in one click from your saved profile and resume. For custom questions like "Why are you a good fit?", it drafts answers with Google Gemini (free tier), tailored to the job description on the page. You review and edit the drafts before anything is filled.
 
+## Screenshots
+
+| Fill | Settings |
+| --- | --- |
+| <img src="docs/screenshots/fill.png" alt="Fill tab on a Greenhouse job page" width="400"> | <img src="docs/screenshots/settings.png" alt="Settings tab with Gemini API key, model, tone and filling options" width="400"> |
+
+| Profile: personal details | Profile: work & preferences | Profile: experience & self-ID |
+| --- | --- | --- |
+| <img src="docs/screenshots/profile-personal.png" alt="Profile tab with resume upload and personal details" width="270"> | <img src="docs/screenshots/profile-work.png" alt="Profile tab with work preferences, summary and skills" width="270"> | <img src="docs/screenshots/profile-experience.png" alt="Profile tab with experience, education, self-identification and saved answers" width="270"> |
+
 ## Setup
 
 ```bash
