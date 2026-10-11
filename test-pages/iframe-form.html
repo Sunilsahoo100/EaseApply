@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Embedded form</title>
+    <style>
+      body { font: 15px/1.5 system-ui, sans-serif; margin: 12px; }
+      .field { display: flex; flex-direction: column; gap: 4px; margin-bottom: 12px; }
+      input, textarea { padding: 8px; border: 1px solid #bbb; border-radius: 6px; font: inherit; }
+    </style>
+  </head>
+  <body>
+    <p>These fields live inside an iframe, like Greenhouse embeds.</p>
+    <div class="field"><label for="city">City</label><input id="city" /></div>
+    <div class="field"><label for="portfolio">Portfolio website</label><input id="portfolio" type="url" /></div>
+    <div class="field"><label for="strength">What is your greatest professional strength?</label><textarea id="strength" rows="3"></textarea></div>
+  </body>
+</html>

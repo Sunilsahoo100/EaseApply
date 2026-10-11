@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Frontend Engineer – Acme Corp (sample application)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "JobPosting",
+        "title": "Senior Frontend Engineer",
+        "hiringOrganization": { "@type": "Organization", "name": "Acme Corp" },
+        "description": "<p>Acme Corp is hiring a Senior Frontend Engineer to build our customer dashboard.</p><ul><li>5+ years building web applications</li><li>Strong TypeScript and Angular or React</li><li>Experience with design systems and accessibility</li><li>Comfortable owning features end to end</li></ul>"
+      }
+    </script>
+    <style>
+      body { font: 15px/1.5 system-ui, sans-serif; max-width: 720px; margin: 32px auto; padding: 0 16px; color: #222; }
+      .field { display: flex; flex-direction: column; gap: 4px; margin-bottom: 14px; }
+      input:not([type=radio]):not([type=checkbox]), select, textarea { padding: 8px; border: 1px solid #bbb; border-radius: 6px; font: inherit; }
+      fieldset { border: 1px solid #ddd; border-radius: 8px; margin-bottom: 14px; }
+      .div-label { font-weight: 600; }
+      iframe { width: 100%; height: 260px; border: 1px dashed #aaa; border-radius: 8px; }
+      .custom-radio input { position: absolute; opacity: 0; }
+      .custom-radio label { display: inline-block; padding: 6px 12px; border: 1px solid #bbb; border-radius: 999px; margin-right: 6px; cursor: pointer; }
+      .custom-radio input:checked + label { background: #2563eb; color: white; }
+    </style>
+  </head>
+  <body>
+    <h1>Senior Frontend Engineer</h1>
+    <p>Sample application form for testing EaseApply. Nothing here is submitted anywhere.</p>
+
+    <form id="apply" onsubmit="event.preventDefault(); alert('Not submitted: this is a test page.')">
+      <h2>Personal information</h2>
+      <div class="field"><label for="first_name">First Name *</label><input id="first_name" name="first_name" required /></div>
+      <div class="field"><label for="last_name">Last Name *</label><input id="last_name" name="last_name" required /></div>
+      <div class="field"><label>Email <input type="email" name="email" /></label></div>
+      <div class="field">
+        <span class="div-label">Phone</span>
+        <div style="display: flex; gap: 6px">
+          <select name="phone_country" aria-label="Country code">
+            <option value="">Code</option>
+            <option value="+1">United States (+1)</option>
+            <option value="+44">United Kingdom (+44)</option>
+            <option value="+91">India (+91)</option>
+          </select>
+          <input type="tel" name="phone" aria-label="Phone number" />
+        </div>
+      </div>
+      <div class="field"><span id="loc-lbl">Current location (city)</span><input aria-labelledby="loc-lbl" /></div>
+      <div class="field"><input name="linkedin_url" placeholder="LinkedIn profile URL" /></div>
+      <div class="field"><div class="div-label">GitHub</div><div><input name="gh" /></div></div>
+      <div class="field"><label for="resume">Resume/CV *</label><input id="resume" type="file" accept=".pdf,.doc,.docx" /></div>
+      <div class="field"><label for="cover">Cover letter (file)</label><input id="cover" type="file" /></div>
+
+      <h2>Experience</h2>
+      <div class="field"><label for="company">Current company</label><input id="company" /></div>
+      <div class="field">
+        <label for="yoe">Total years of experience</label>
+        <select id="yoe"><option value="">Select…</option><option>0-2 years</option><option>3-5 years</option><option>6-9 years</option><option>10+ years</option></select>
+      </div>
+      <div class="field"><label for="notice">Notice period</label><input id="notice" /></div>
+      <div class="field"><label for="ctc">Expected CTC</label><input id="ctc" /></div>
+      <div class="field"><label for="prefilled">Preferred name (already filled)</label><input id="prefilled" value="Typed by me" /></div>
+
+      <fieldset>
+        <legend>Will you now or in the future require visa sponsorship?</legend>
+        <label><input type="radio" name="sponsorship" value="yes" /> Yes</label>
+        <label><input type="radio" name="sponsorship" value="no" /> No</label>
+      </fieldset>
+
+      <div class="field">
+        <p class="div-label">Are you willing to relocate?</p>
+        <div class="custom-radio">
+          <input type="radio" name="relocate" id="rel-y" value="1" /><label for="rel-y">Yes</label>
+          <input type="radio" name="relocate" id="rel-n" value="0" /><label for="rel-n">No</label>
+        </div>
+      </div>
+
+      <h2>A few questions</h2>
+      <div class="field">
+        <label for="why">Why do you think you are a good fit for this role?</label>
+        <textarea id="why" rows="5" maxlength="1000"></textarea>
+      </div>
+      <div class="field"><label for="hear">How did you hear about us?</label>
+        <select id="hear"><option value="">Select…</option><option>LinkedIn</option><option>Referral</option><option>Company website</option><option>Other</option></select>
+      </div>
+      <fieldset>
+        <legend>Which of these have you used in production?</legend>
+        <label><input type="checkbox" name="tech" value="ng" /> Angular</label>
+        <label><input type="checkbox" name="tech" value="react" /> React</label>
+        <label><input type="checkbox" name="tech" value="vue" /> Vue</label>
+        <label><input type="checkbox" name="tech" value="svelte" /> Svelte</label>
+      </fieldset>
+      <div class="field">
+        <label>Describe a project you are proud of</label>
+        <div contenteditable="true" style="min-height: 80px; border: 1px solid #bbb; border-radius: 6px; padding: 8px"></div>
+      </div>
+
+      <h2>Voluntary self-identification</h2>
+      <div class="field"><label for="gender">Gender</label>
+        <select id="gender"><option value="">Select…</option><option>Male</option><option>Female</option><option>Non-binary</option><option>I prefer not to say</option></select>
+      </div>
+      <label><input type="checkbox" name="privacy" required /> I agree to the privacy policy *</label>
+
+      <h2>Embedded section (iframe)</h2>
+      <iframe src="iframe-form.html" title="Embedded form"></iframe>
+
+      <p><button type="submit">Submit application</button></p>
+    </form>
+  </body>
+</html>

@@ -1,0 +1,180 @@
+@if (model(); as p) {
+  <form class="stack" (ngSubmit)="save()" (input)="touch($event)" (change)="touch($event)">
+    <!-- Resume -->
+    <fieldset class="card stack-sm">
+      <legend>Resume</legend>
+      @if (store.resume(); as r) {
+        <div class="file-row">
+          <span class="file-icon">📄</span>
+          <div class="grow">
+            <div class="truncate"><strong>{{ r.fileName }}</strong></div>
+            <div class="muted small">
+              {{ formatSize(r.size) }} · {{ r.extractedText ? 'text extracted' : 'not imported yet' }}
+            </div>
+          </div>
+          <button type="button" class="btn btn-sm" (click)="removeResume()">Remove</button>
+        </div>
+      }
+      <label class="btn btn-block file-btn">
+        {{ store.resume() ? 'Replace resume' : 'Upload resume (PDF)' }}
+        <input type="file" accept=".pdf,.txt,.doc,.docx,application/pdf" (change)="onResumeSelected($event)" hidden />
+      </label>
+      @if (store.resume()) {
+        @if (hasKey()) {
+          <button type="button" class="btn btn-ai btn-block" (click)="importFromResume()" [disabled]="importing()">
+            {{ importing() ? 'Reading your resume…' : 'Import profile from resume (AI)' }}
+          </button>
+        } @else {
+          <p class="muted small">Add a Gemini key in <a routerLink="/settings">Settings</a> to auto-fill this profile from your resume.</p>
+        }
+      }
+      <p class="muted small">The resume is attached automatically to "Resume/CV" upload fields.</p>
+    </fieldset>
+
+    @if (error()) {
+      <div class="alert alert-error" role="alert">{{ error() }}</div>
+    }
+    @if (notice()) {
+      <div class="alert" role="status">{{ notice() }}</div>
+    }
+
+    <!-- Personal -->
+    <fieldset class="card grid-2">
+      <legend>Personal</legend>
+      <label class="field"><span>First name</span><input name="firstName" [(ngModel)]="p.firstName" autocomplete="given-name" /></label>
+      <label class="field"><span>Last name</span><input name="lastName" [(ngModel)]="p.lastName" autocomplete="family-name" /></label>
+      <label class="field"><span>Middle name</span><input name="middleName" [(ngModel)]="p.middleName" /></label>
+      <label class="field"><span>Email</span><input name="email" type="email" [(ngModel)]="p.email" /></label>
+      <label class="field"><span>Country code</span><input name="phoneCountryCode" [(ngModel)]="p.phoneCountryCode" placeholder="+91" /></label>
+      <label class="field"><span>Phone</span><input name="phone" type="tel" [(ngModel)]="p.phone" /></label>
+      <label class="field span-2"><span>Street address</span><input name="address" [(ngModel)]="p.address" /></label>
+      <label class="field"><span>City</span><input name="city" [(ngModel)]="p.city" /></label>
+      <label class="field"><span>State / province</span><input name="state" [(ngModel)]="p.state" /></label>
+      <label class="field"><span>Country</span><input name="country" [(ngModel)]="p.country" /></label>
+      <label class="field"><span>ZIP / postal code</span><input name="zip" [(ngModel)]="p.zip" /></label>
+    </fieldset>
+
+    <!-- Links -->
+    <fieldset class="card grid-2">
+      <legend>Links</legend>
+      <label class="field span-2"><span>LinkedIn</span><input name="linkedin" type="url" [(ngModel)]="p.linkedin" placeholder="https://linkedin.com/in/…" /></label>
+      <label class="field span-2"><span>GitHub</span><input name="github" type="url" [(ngModel)]="p.github" /></label>
+      <label class="field span-2"><span>Portfolio</span><input name="portfolio" type="url" [(ngModel)]="p.portfolio" /></label>
+      <label class="field span-2"><span>Other website</span><input name="website" type="url" [(ngModel)]="p.website" /></label>
+    </fieldset>
+
+    <!-- Work -->
+    <fieldset class="card grid-2">
+      <legend>Work &amp; preferences</legend>
+      <label class="field"><span>Current title</span><input name="currentTitle" [(ngModel)]="p.currentTitle" /></label>
+      <label class="field"><span>Current company</span><input name="currentCompany" [(ngModel)]="p.currentCompany" /></label>
+      <label class="field"><span>Total experience (years)</span><input name="totalExperienceYears" [(ngModel)]="p.totalExperienceYears" placeholder="4.5" /></label>
+      <label class="field"><span>Notice period</span><input name="noticePeriod" [(ngModel)]="p.noticePeriod" placeholder="30 days" /></label>
+      <label class="field"><span>Current salary / CTC</span><input name="currentSalary" [(ngModel)]="p.currentSalary" /></label>
+      <label class="field"><span>Expected salary / CTC</span><input name="expectedSalary" [(ngModel)]="p.expectedSalary" /></label>
+      <label class="field"><span>Authorized to work?</span>
+        <select name="workAuthorization" [(ngModel)]="p.workAuthorization">
+          @for (o of yesNo; track o) { <option [value]="o">{{ o || '—' }}</option> }
+        </select>
+      </label>
+      <label class="field"><span>Need visa sponsorship?</span>
+        <select name="requiresSponsorship" [(ngModel)]="p.requiresSponsorship">
+          @for (o of yesNo; track o) { <option [value]="o">{{ o || '—' }}</option> }
+        </select>
+      </label>
+      <label class="field"><span>Willing to relocate?</span>
+        <select name="willingToRelocate" [(ngModel)]="p.willingToRelocate">
+          @for (o of yesNo; track o) { <option [value]="o">{{ o || '—' }}</option> }
+        </select>
+      </label>
+      <label class="field"><span>Earliest start date</span><input name="earliestStartDate" type="date" [(ngModel)]="p.earliestStartDate" /></label>
+      <label class="field span-2"><span>Professional summary</span><textarea name="summary" rows="4" [(ngModel)]="p.summary"></textarea></label>
+      <label class="field span-2"><span>Skills (comma separated)</span>
+        <textarea name="skills" rows="2" [ngModel]="skillsText()" (ngModelChange)="skillsText.set($event)"></textarea>
+      </label>
+    </fieldset>
+
+    <!-- Experience -->
+    <fieldset class="card stack-sm">
+      <legend>Experience</legend>
+      @for (e of p.experience; track $index; let i = $index) {
+        <div class="sub-card grid-2">
+          <label class="field"><span>Title</span><input [name]="'expTitle' + i" [(ngModel)]="e.title" /></label>
+          <label class="field"><span>Company</span><input [name]="'expCompany' + i" [(ngModel)]="e.company" /></label>
+          <label class="field"><span>Start</span><input [name]="'expStart' + i" [(ngModel)]="e.startDate" placeholder="2021-06" /></label>
+          <label class="field"><span>End</span><input [name]="'expEnd' + i" [(ngModel)]="e.endDate" [disabled]="e.current" placeholder="2024-01" /></label>
+          <label class="check span-2"><input type="checkbox" [name]="'expCurrent' + i" [(ngModel)]="e.current" /> I currently work here</label>
+          <label class="field span-2"><span>Location</span><input [name]="'expLoc' + i" [(ngModel)]="e.location" /></label>
+          <label class="field span-2"><span>Description</span><textarea [name]="'expDesc' + i" rows="3" [(ngModel)]="e.description"></textarea></label>
+          <button type="button" class="btn btn-sm btn-danger span-2" (click)="removeExperience(i)">Remove</button>
+        </div>
+      }
+      <button type="button" class="btn btn-sm" (click)="addExperience()">+ Add experience</button>
+    </fieldset>
+
+    <!-- Education -->
+    <fieldset class="card stack-sm">
+      <legend>Education</legend>
+      @for (ed of p.education; track $index; let i = $index) {
+        <div class="sub-card grid-2">
+          <label class="field span-2"><span>School / university</span><input [name]="'eduSchool' + i" [(ngModel)]="ed.school" /></label>
+          <label class="field"><span>Degree</span><input [name]="'eduDegree' + i" [(ngModel)]="ed.degree" placeholder="Bachelor's" /></label>
+          <label class="field"><span>Field of study</span><input [name]="'eduField' + i" [(ngModel)]="ed.fieldOfStudy" /></label>
+          <label class="field"><span>Start</span><input [name]="'eduStart' + i" [(ngModel)]="ed.startDate" /></label>
+          <label class="field"><span>End</span><input [name]="'eduEnd' + i" [(ngModel)]="ed.endDate" /></label>
+          <label class="field"><span>Grade / GPA</span><input [name]="'eduGrade' + i" [(ngModel)]="ed.grade" /></label>
+          <button type="button" class="btn btn-sm btn-danger span-2" (click)="removeEducation(i)">Remove</button>
+        </div>
+      }
+      <button type="button" class="btn btn-sm" (click)="addEducation()">+ Add education</button>
+    </fieldset>
+
+    <!-- EEO -->
+    <fieldset class="card grid-2">
+      <legend>Voluntary self-identification</legend>
+      <p class="muted small span-2">Used only for equal-opportunity questions. Never sent to the AI.</p>
+      <label class="field"><span>Gender</span>
+        <select name="gender" [(ngModel)]="p.eeo.gender">
+          @for (o of eeoOptions.gender; track o) { <option [value]="o">{{ o }}</option> }
+        </select>
+      </label>
+      <label class="field"><span>Pronouns</span><input name="pronouns" [(ngModel)]="p.eeo.pronouns" /></label>
+      <label class="field span-2"><span>Race / ethnicity</span>
+        <select name="race" [(ngModel)]="p.eeo.race">
+          @for (o of eeoOptions.race; track o) { <option [value]="o">{{ o }}</option> }
+        </select>
+      </label>
+      <label class="field span-2"><span>Veteran status</span>
+        <select name="veteran" [(ngModel)]="p.eeo.veteran">
+          @for (o of eeoOptions.veteran; track o) { <option [value]="o">{{ o }}</option> }
+        </select>
+      </label>
+      <label class="field span-2"><span>Disability</span>
+        <select name="disability" [(ngModel)]="p.eeo.disability">
+          @for (o of eeoOptions.disability; track o) { <option [value]="o">{{ o }}</option> }
+        </select>
+      </label>
+    </fieldset>
+
+    <!-- Saved answers -->
+    <fieldset class="card stack-sm">
+      <legend>Saved answers</legend>
+      @for (a of answers(); track a.id; let i = $index) {
+        <div class="sub-card stack-sm">
+          <input [name]="'saQ' + i" [(ngModel)]="a.question" class="strong" />
+          <textarea [name]="'saA' + i" rows="3" [(ngModel)]="a.answer"></textarea>
+          <button type="button" class="btn btn-sm btn-danger" (click)="removeAnswer(a.id)">Delete</button>
+        </div>
+      } @empty {
+        <p class="muted small">Answers you save from the AI preview appear here and are reused on similar questions.</p>
+      }
+    </fieldset>
+
+    <div class="save-bar">
+      <button type="button" class="btn" (click)="discard()" [disabled]="!dirty()">Discard</button>
+      <button type="submit" class="btn btn-primary grow" [disabled]="!dirty()">{{ dirty() ? 'Save profile' : 'Saved' }}</button>
+    </div>
+  </form>
+} @else {
+  <p class="muted">Loading…</p>
+}

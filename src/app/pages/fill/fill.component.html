@@ -1,0 +1,148 @@
+<section class="stack">
+  <div class="page-chip" [title]="page.tab()?.url ?? ''">
+    <span class="dot"></span>
+    <span class="truncate">{{ page.hostname() || 'No page' }}</span>
+  </div>
+
+  @if (store.loaded() && !store.hasProfile()) {
+    <div class="callout">
+      <strong>Set up your profile first.</strong>
+      <p>Add your details and resume once; the extension reuses them on every form.</p>
+      <a class="btn btn-primary" routerLink="/profile">Go to Profile</a>
+    </div>
+  }
+
+  <div class="actions">
+    <button class="btn btn-primary btn-lg" (click)="fill()" [disabled]="phase() === 'filling'">
+      {{ phase() === 'filling' ? 'Filling…' : 'Fill this form' }}
+    </button>
+    <button class="btn btn-lg" (click)="clear()" title="Undo every field this extension filled on this page">Clear filled</button>
+  </div>
+
+  @if (error()) {
+    <div class="alert alert-error" role="alert">{{ error() }}</div>
+  }
+  @if (notice()) {
+    <div class="alert" role="status">{{ notice() }}</div>
+  }
+
+  @if (phase() === 'filled') {
+    <div class="stats">
+      <div class="stat stat-green"><b>{{ filled().length }}</b><span>filled</span></div>
+      <div class="stat stat-purple"><b>{{ aiQuestions().length }}</b><span>for AI</span></div>
+      <div class="stat"><b>{{ manualQuestions().length }}</b><span>for you</span></div>
+      <div class="stat"><b>{{ prefilled() }}</b><span>already set</span></div>
+    </div>
+
+    @if (filled().length) {
+      <details class="card" [open]="showFilled()" (toggle)="showFilled.set($any($event.target).open)">
+        <summary>Filled fields</summary>
+        <ul class="kv-list">
+          @for (f of filled(); track f.jafId) {
+            <li>
+              <span class="kv-label">{{ f.label || '(unlabeled)' }}</span>
+              <span class="kv-value truncate">{{ f.value }}</span>
+              <span class="badge" [class.badge-ai]="f.source === 'ai'" [class.badge-saved]="f.source === 'saved'">{{ sourceLabel(f) }}</span>
+            </li>
+          }
+        </ul>
+      </details>
+    }
+
+    @if (aiQuestions().length && !drafts().length) {
+      <div class="card stack-sm">
+        <h3>{{ aiQuestions().length }} question{{ aiQuestions().length === 1 ? '' : 's' }} not in your profile</h3>
+        <ul class="plain-list">
+          @for (q of aiQuestions(); track q.jafId) {
+            <li>{{ q.label || '(unlabeled field)' }} @if (q.required) {<span class="req">*</span>}</li>
+          }
+        </ul>
+
+        @if (job(); as j) {
+          <p class="muted small">
+            Tailoring to: <strong>{{ j.title || 'this job' }}</strong>@if (j.company) { at <strong>{{ j.company }}</strong>}
+          </p>
+        } @else {
+          <label class="field">
+            <span>No job description found on this page. Paste it here for better answers (optional):</span>
+            <textarea rows="3" [ngModel]="manualJob()" (ngModelChange)="manualJob.set($event)" placeholder="Paste the job description…"></textarea>
+          </label>
+        }
+
+        @if (hasKey()) {
+          <button class="btn btn-ai" (click)="generate()" [disabled]="aiLoading()">
+            {{ aiLoading() ? 'Asking Gemini…' : 'Draft answers with AI' }}
+          </button>
+        } @else {
+          <p class="small">Add a free Gemini API key in <a routerLink="/settings">Settings</a> to draft these answers.</p>
+        }
+      </div>
+    }
+
+    @if (drafts().length) {
+      <div class="stack-sm">
+        <div class="row-between">
+          <h3>Review AI answers</h3>
+          <button class="btn btn-sm" (click)="generate()" [disabled]="aiLoading()">{{ aiLoading() ? '…' : 'Regenerate' }}</button>
+        </div>
+        @for (d of drafts(); track d.field.jafId; let i = $index) {
+          <article class="draft" [class.draft-off]="!d.include">
+            <label class="draft-head">
+              <input type="checkbox" [checked]="d.include" (change)="updateDraft(i, { include: $any($event.target).checked })" />
+              <span class="draft-q">{{ d.field.label || '(unlabeled field)' }}</span>
+              @if (!d.answer) {
+                <span class="badge badge-warn">no answer</span>
+              } @else if (d.confidence < 0.5) {
+                <span class="badge badge-warn">check this</span>
+              }
+            </label>
+
+            @if (d.field.options?.length && d.field.kind !== 'checkbox-group') {
+              <select [ngModel]="d.answer" (ngModelChange)="updateDraft(i, { answer: $event, include: !!$event })">
+                <option value="">Choose…</option>
+                @for (o of d.field.options; track o) {
+                  <option [value]="o">{{ o }}</option>
+                }
+              </select>
+            } @else if (isShortKind(d.field)) {
+              <input type="text" [ngModel]="d.answer" (ngModelChange)="updateDraft(i, { answer: $event })" />
+            } @else {
+              <textarea [rows]="d.field.kind === 'checkbox-group' ? 2 : 5" [ngModel]="d.answer" (ngModelChange)="updateDraft(i, { answer: $event })"></textarea>
+              @if (d.field.kind === 'checkbox-group') {
+                <span class="muted small">Options (comma separated): {{ d.field.options?.join(', ') }}</span>
+              }
+              @if (d.field.maxLength) {
+                <span class="muted small right">{{ d.answer.length }} / {{ d.field.maxLength }}</span>
+              }
+            }
+
+            <label class="check small">
+              <input type="checkbox" [checked]="d.save" (change)="updateDraft(i, { save: $any($event.target).checked })" />
+              Save this answer for similar questions
+            </label>
+          </article>
+        }
+        <button class="btn btn-ai btn-lg sticky-bottom" (click)="applyDrafts()" [disabled]="!selectedCount() || applying()">
+          {{ applying() ? 'Filling…' : 'Fill ' + selectedCount() + ' selected answer' + (selectedCount() === 1 ? '' : 's') }}
+        </button>
+      </div>
+    }
+
+    @if (manualQuestions().length) {
+      <details class="card">
+        <summary>{{ manualQuestions().length }} field{{ manualQuestions().length === 1 ? '' : 's' }} for you to answer</summary>
+        <p class="muted small">Personal, consent and file fields the extension won't guess.</p>
+        <ul class="plain-list">
+          @for (q of manualQuestions(); track q.jafId) {
+            <li>{{ q.label || '(unlabeled field)' }} <span class="muted">· {{ q.kind }}</span></li>
+          }
+        </ul>
+      </details>
+    }
+
+    <p class="legend small muted">
+      <span class="swatch swatch-green"></span> profile <span class="swatch swatch-blue"></span> saved answer
+      <span class="swatch swatch-purple"></span> AI
+    </p>
+  }
+</section>

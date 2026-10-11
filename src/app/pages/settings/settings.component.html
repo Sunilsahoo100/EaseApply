@@ -1,0 +1,75 @@
+@if (model(); as s) {
+  <form class="stack" (ngSubmit)="save()">
+    <fieldset class="card stack-sm">
+      <legend>Gemini AI</legend>
+      <p class="muted small">
+        Get a free API key from
+        <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Google AI Studio</a>.
+        It's stored only on this device and used only to call Gemini.
+      </p>
+      <label class="field">
+        <span>API key</span>
+        <div class="input-row">
+          <input name="apiKey" [type]="showKey() ? 'text' : 'password'" [(ngModel)]="s.geminiApiKey" autocomplete="off" spellcheck="false" placeholder="AIza…" />
+          <button type="button" class="btn btn-sm" (click)="showKey.set(!showKey())">{{ showKey() ? 'Hide' : 'Show' }}</button>
+        </div>
+      </label>
+      <label class="field">
+        <span>Model</span>
+        <div class="input-row">
+          <input name="model" list="model-list" [(ngModel)]="s.model" [placeholder]="defaultModel" spellcheck="false" />
+          <button type="button" class="btn btn-sm" (click)="loadModels()" [disabled]="!s.geminiApiKey || busy() === 'models'">
+            {{ busy() === 'models' ? '…' : 'List' }}
+          </button>
+        </div>
+        <datalist id="model-list">
+          @for (m of models(); track m) { <option [value]="m"></option> }
+        </datalist>
+        <span class="muted small">"{{ defaultModel }}" always points to Google's newest Flash model.</span>
+      </label>
+      <button type="button" class="btn" (click)="test()" [disabled]="!s.geminiApiKey || busy() === 'test'">
+        {{ busy() === 'test' ? 'Testing…' : 'Test connection' }}
+      </button>
+    </fieldset>
+
+    <fieldset class="card grid-2">
+      <legend>AI answers</legend>
+      <label class="field"><span>Tone</span>
+        <select name="tone" [(ngModel)]="s.tone">
+          <option value="professional">Professional</option>
+          <option value="friendly">Friendly</option>
+          <option value="confident">Confident</option>
+        </select>
+      </label>
+      <label class="field"><span>Length</span>
+        <select name="answerLength" [(ngModel)]="s.answerLength">
+          <option value="short">Short</option>
+          <option value="medium">Medium</option>
+          <option value="detailed">Detailed</option>
+        </select>
+      </label>
+    </fieldset>
+
+    <fieldset class="card stack-sm">
+      <legend>Filling</legend>
+      <label class="check">
+        <input type="checkbox" name="overwrite" [(ngModel)]="s.overwriteExisting" />
+        Overwrite fields that already have a value
+      </label>
+      <label class="check">
+        <input type="checkbox" name="highlight" [(ngModel)]="s.highlightFields" />
+        Outline the fields the extension fills
+      </label>
+      <p class="muted small">Shortcut: <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>F</kbd> fills known fields without opening the panel. Change it at chrome://extensions/shortcuts.</p>
+    </fieldset>
+
+    @if (error()) {
+      <div class="alert alert-error" role="alert">{{ error() }}</div>
+    }
+    @if (notice()) {
+      <div class="alert" role="status">{{ notice() }}</div>
+    }
+
+    <button type="submit" class="btn btn-primary btn-lg" [disabled]="busy() === 'save'">Save settings</button>
+  </form>
+}
