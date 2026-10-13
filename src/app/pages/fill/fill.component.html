@@ -4,6 +4,18 @@
     <span class="truncate">{{ page.hostname() || 'No page' }}</span>
   </div>
 
+  <div class="set-picker">
+    <label class="field grow">
+      <span>Fill as</span>
+      <select [ngModel]="store.activeSetId()" (ngModelChange)="selectSet($event)" [disabled]="phase() === 'filling' || aiLoading() || applying()">
+        @for (s of store.sets(); track s.id) {
+          <option [value]="s.id">{{ s.name }}</option>
+        }
+      </select>
+    </label>
+    <a class="btn btn-sm" routerLink="/profile" title="Add or edit profile sets">{{ store.sets().length > 1 ? 'Edit' : '+ Add role' }}</a>
+  </div>
+
   @if (store.loaded() && !store.hasProfile()) {
     <div class="callout">
       <strong>Set up your profile first.</strong>

@@ -107,6 +107,16 @@ export class FillComponent {
     }
   }
 
+  async selectSet(id: string): Promise<void> {
+    try {
+      await this.store.selectSet(id);
+      // Drafts were written from the previous set's resume and profile.
+      this.drafts.set([]);
+    } catch (err) {
+      this.fail(err);
+    }
+  }
+
   async generate(): Promise<void> {
     const questions = this.aiQuestions();
     if (!questions.length) return;

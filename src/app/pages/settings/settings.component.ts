@@ -45,9 +45,17 @@ export class SettingsComponent {
   save(): Promise<void> {
     return this.run('save', async () => {
       const s = this.model()!;
-      await this.store.save('settings', { ...s, geminiApiKey: s.geminiApiKey.trim(), model: s.model.trim() || DEFAULT_MODEL });
+      await this.store.saveSettings({ ...s, geminiApiKey: s.geminiApiKey.trim(), model: s.model.trim() || DEFAULT_MODEL });
       return 'Settings saved.';
     });
+  }
+
+  async signOut(): Promise<void> {
+    try {
+      await this.store.signOut();
+    } catch (err) {
+      this.error.set(errorMessage(err));
+    }
   }
 
   test(): Promise<void> {

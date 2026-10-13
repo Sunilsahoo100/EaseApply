@@ -80,6 +80,27 @@ export interface SavedAnswer {
   updatedAt: number;
 }
 
+/** A named profile for one kind of role (e.g. "Software Engineer"), with its own resume and saved answers. */
+export interface ProfileSet {
+  id: string;
+  name: string;
+  profile: Profile;
+  savedAnswers: SavedAnswer[];
+  updatedAt: number;
+}
+
+/** The Google account signed in to the extension. Only identity is kept; no tokens are stored. */
+export interface AuthUser {
+  /** Google's stable account id (the OpenID "sub" claim). */
+  id: string;
+  email: string;
+  name: string;
+  givenName: string;
+  familyName: string;
+  picture: string;
+  signedInAt: number;
+}
+
 export type AnswerTone = 'professional' | 'friendly' | 'confident';
 export type AnswerLength = 'short' | 'medium' | 'detailed';
 
@@ -136,6 +157,10 @@ export function defaultProfile(): Profile {
     education: [],
     eeo: { gender: DECLINE, pronouns: '', race: DECLINE, veteran: DECLINE, disability: DECLINE },
   };
+}
+
+export function newProfileSet(name: string, profile: Profile = defaultProfile(), savedAnswers: SavedAnswer[] = []): ProfileSet {
+  return { id: crypto.randomUUID(), name, profile, savedAnswers, updatedAt: Date.now() };
 }
 
 export const DEFAULT_MODEL = 'gemini-flash-latest';

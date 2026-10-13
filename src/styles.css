@@ -532,6 +532,69 @@ kbd {
   background: #8b5cf6;
 }
 
+.set-picker {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.set-picker .btn {
+  padding-block: 7px;
+}
+
+/* Sign-in and account */
+.login {
+  align-items: center;
+  text-align: center;
+  padding: 32px 8px;
+}
+
+.login h1 {
+  margin: 0;
+  font-size: 20px;
+}
+
+.login p {
+  margin: 0;
+  max-width: 300px;
+}
+
+.btn-google {
+  width: 100%;
+  max-width: 300px;
+  gap: 10px;
+}
+
+.avatar-link {
+  display: flex;
+  text-decoration: none;
+}
+
+.avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--primary);
+  color: var(--primary-text);
+  font-size: 12px;
+  font-weight: 600;
+  object-fit: cover;
+}
+
+.avatar-lg {
+  width: 36px;
+  height: 36px;
+  font-size: 16px;
+}
+
+code {
+  font-size: 12px;
+}
+
 /* Profile page */
 .file-row {
   display: flex;

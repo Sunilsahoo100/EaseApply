@@ -17,6 +17,13 @@ const MAX_RESUME_BYTES = 8 * 1024 * 1024;
 
 type StringKeys<T> = { [K in keyof T]: T[K] extends string ? K : never }[keyof T];
 
+interface SetForm {
+  mode: 'create' | 'rename';
+  name: string;
+  /** Create only: start as a copy of the current set. */
+  copy: boolean;
+}
+
 @Component({
   selector: 'app-profile',
   imports: [FormsModule, RouterLink],
@@ -27,6 +34,8 @@ export class ProfileComponent {
 
   /** Working copy edited by the form; written to storage on Save. */
   protected readonly model = signal<Profile | null>(null);
+  /** The profile set the working copy belongs to. */
+  protected readonly editingSetId = signal('');
   protected readonly skillsText = signal('');
   protected readonly answers = signal<SavedAnswer[]>([]);
   protected readonly dirty = signal(false);
@@ -35,6 +44,9 @@ export class ProfileComponent {
   protected readonly notice = signal('');
   protected readonly error = signal('');
   protected readonly hasKey = computed(() => !!this.store.settings().geminiApiKey);
+
+  protected readonly setForm = signal<SetForm | null>(null);
+  protected readonly confirmDelete = signal(false);
 
   protected readonly yesNo = ['', 'Yes', 'No'];
   protected readonly eeoOptions = {
@@ -54,11 +66,12 @@ export class ProfileComponent {
   };
 
   constructor() {
-    // Load the stored profile into the form once storage is ready.
+    // Load the active set into the form once storage is ready, and again whenever another set is chosen.
     effect(() => {
       if (!this.store.loaded()) return;
+      const setId = this.store.activeSetId();
       untracked(() => {
-        if (this.model()) return;
+        if (this.model() && setId === this.editingSetId()) return;
         this.load();
       });
     });
@@ -66,6 +79,7 @@ export class ProfileComponent {
 
   private load(): void {
     const p = structuredClone(this.store.profile());
+    this.editingSetId.set(this.store.activeSetId());
     this.model.set(p);
     this.skillsText.set(p.skills.join(', '));
     this.answers.set(structuredClone(this.store.savedAnswers()));
@@ -87,8 +101,10 @@ export class ProfileComponent {
       .map((s) => s.trim())
       .filter(Boolean);
     try {
-      await this.store.save('profile', structuredClone(p));
-      await this.store.save('savedAnswers', this.answers().filter((a) => a.question.trim() && a.answer.trim()));
+      await this.store.updateSet(this.editingSetId(), {
+        profile: structuredClone(p),
+        savedAnswers: this.answers().filter((a) => a.question.trim() && a.answer.trim()),
+      });
       this.dirty.set(false);
       this.error.set('');
       this.notice.set('Profile saved.');
@@ -100,6 +116,64 @@ export class ProfileComponent {
   discard(): void {
     this.load();
     this.notice.set('Changes discarded.');
+  }
+
+  // ---- Profile sets ----
+
+  async selectSet(id: string): Promise<void> {
+    this.setForm.set(null);
+    this.confirmDelete.set(false);
+    await this.store.selectSet(id);
+    this.notice.set('');
+    this.error.set('');
+  }
+
+  startCreate(): void {
+    this.confirmDelete.set(false);
+    this.setForm.set({ mode: 'create', name: '', copy: true });
+  }
+
+  startRename(): void {
+    this.confirmDelete.set(false);
+    this.setForm.set({ mode: 'rename', name: this.store.activeSet()?.name ?? '', copy: false });
+  }
+
+  protected patchSetForm(patch: Partial<SetForm>): void {
+    this.setForm.update((f) => f && { ...f, ...patch });
+  }
+
+  async submitSetForm(): Promise<void> {
+    const form = this.setForm();
+    const name = form?.name.trim();
+    if (!form || !name) return;
+    try {
+      if (form.mode === 'create') {
+        await this.store.createSet(name, form.copy ? this.editingSetId() : undefined);
+        this.notice.set(
+          form.copy
+            ? `Created "${name}" as a copy. Change what differs for this role (summary, skills, resume, saved answers), then click Save.`
+            : `Created "${name}". Fill in the details for this role, then click Save.`,
+        );
+      } else {
+        await this.store.updateSet(this.editingSetId(), { name });
+        this.notice.set(`Renamed to "${name}".`);
+      }
+      this.setForm.set(null);
+      this.error.set('');
+    } catch (err) {
+      this.error.set(errorMessage(err));
+    }
+  }
+
+  async deleteSet(): Promise<void> {
+    const name = this.store.activeSet()?.name ?? '';
+    try {
+      await this.store.deleteSet(this.editingSetId());
+      this.confirmDelete.set(false);
+      this.notice.set(`Deleted "${name}".`);
+    } catch (err) {
+      this.error.set(errorMessage(err));
+    }
   }
 
   // ---- Resume ----
@@ -127,7 +201,7 @@ export class ProfileComponent {
       extractedText: '',
       updatedAt: Date.now(),
     };
-    await this.store.save('resume', resume);
+    await this.store.saveResume(this.editingSetId(), resume);
     this.error.set('');
     this.notice.set(
       this.hasKey() && /pdf|text/.test(resume.mimeType)
@@ -137,7 +211,7 @@ export class ProfileComponent {
   }
 
   async removeResume(): Promise<void> {
-    await this.store.save('resume', null);
+    await this.store.saveResume(this.editingSetId(), null);
     this.notice.set('Resume removed.');
   }
 
@@ -149,7 +223,7 @@ export class ProfileComponent {
       const parsed = await sendToBackground({ type: 'AI_PARSE_RESUME' });
       this.applyParsed(parsed);
       const resume = this.store.resume();
-      if (resume && parsed.extractedText) await this.store.save('resume', { ...resume, extractedText: parsed.extractedText });
+      if (resume && parsed.extractedText) await this.store.saveResume(this.editingSetId(), { ...resume, extractedText: parsed.extractedText });
       this.dirty.set(true);
       this.notice.set('Imported from your resume. Review the details below, then click Save.');
     } catch (err) {

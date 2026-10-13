@@ -1,5 +1,24 @@
 @if (model(); as s) {
   <form class="stack" (ngSubmit)="save()">
+    @if (store.user(); as user) {
+      <fieldset class="card stack-sm">
+        <legend>Account</legend>
+        <div class="file-row">
+          @if (user.picture) {
+            <img class="avatar avatar-lg" [src]="user.picture" alt="" referrerpolicy="no-referrer" />
+          } @else {
+            <span class="avatar avatar-lg">{{ user.name.charAt(0).toUpperCase() }}</span>
+          }
+          <div class="grow">
+            <div class="truncate"><strong>{{ user.name }}</strong></div>
+            <div class="muted small truncate">{{ user.email }}</div>
+          </div>
+          <button type="button" class="btn btn-sm" (click)="signOut()">Sign out</button>
+        </div>
+        <p class="muted small">Profiles and settings are saved on this device for each Google account. Signing out keeps them here for next time.</p>
+      </fieldset>
+    }
+
     <fieldset class="card stack-sm">
       <legend>Gemini AI</legend>
       <p class="muted small">

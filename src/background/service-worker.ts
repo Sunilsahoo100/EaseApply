@@ -18,12 +18,12 @@ async function provider(apiKey?: string, model?: string): Promise<GeminiProvider
 }
 
 async function answerQuestions(req: Extract<BackgroundRequest, { type: 'AI_ANSWER_QUESTIONS' }>): Promise<AiAnswer[]> {
-  const { profile, resume, settings } = await loadData(['profile', 'resume', 'settings']);
+  const { setId, profile, resume, settings } = await loadData(['setId', 'profile', 'resume', 'settings']);
   if (!resume && !profile.summary && !profile.experience.length) {
     throw new AiError('Upload your resume (or fill in your experience) in the Profile tab so the AI has something to work from.');
   }
   const cacheKey = (q: { question: string; options?: string[] }) =>
-    [settings.model, settings.tone, settings.answerLength, req.pageUrl, q.question, q.options?.join('|')].join('\u0000');
+    [setId, settings.model, settings.tone, settings.answerLength, req.pageUrl, q.question, q.options?.join('|')].join('\u0000');
 
   const fresh = req.questions.filter((q) => !answerCache.has(cacheKey(q)));
   if (fresh.length) {
